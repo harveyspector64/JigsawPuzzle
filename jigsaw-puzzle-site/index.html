@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffd9e6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Our California Jigsaw</title>
+
+  <!-- Cute, beachy fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --sky-top:#ffe6ef; --sky-mid:#ffd9c8; --sunset:#ffd1dc;
+      --ocean:#c6f0ff; --sea:#9dd9ff;
+      --ink:#233142; --heart:#ff5f9e; --rose:#ff8fb1;
+      --card:#ffffffcc; --accent:#ff7aa2; --accent-2:#78c5ff;
+      --ok:#1f9d7a; --safe-top: env(safe-area-inset-top,0px); --safe-bottom: env(safe-area-inset-bottom,0px);
+    }
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,var(--sky-top),var(--sky-mid),var(--sunset),var(--ocean),var(--sea));min-height:100svh;color:var(--ink);font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+    .hearts{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+    .hearts span{position:absolute;bottom:-2rem;opacity:.22;color:var(--heart);font-size:clamp(18px,2.8vw,28px);animation:floatUp linear forwards}
+    @keyframes floatUp{0%{transform:translateY(0) translateX(0) rotate(0);opacity:.14}100%{transform:translateY(-120vh) translateX(var(--shift)) rotate(18deg);opacity:0}}
+    .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:calc(10px + var(--safe-top)) 14px calc(14px + var(--safe-bottom))}
+    header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+    .title{display:flex;align-items:center;gap:10px}
+    .logo{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 40% 40%,#fff 0 38%,#ffd1dc 39% 100%);box-shadow:0 6px 14px rgba(0,0,0,.08),inset 0 0 0 2px #fff7;font-family:"Pacifico",cursive;color:var(--heart);user-select:none}
+    h1{font-family:"Pacifico",cursive;font-weight:400;margin:0;font-size:clamp(22px,5.2vw,36px);color:#c74173;text-shadow:0 2px 0 #fff8}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{border:0;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:600;background:linear-gradient(180deg,#fff,#ffeef6);box-shadow:0 2px 0 #ffb7ce88,0 6px 16px rgba(0,0,0,.08);color:#c13b73;transition:transform .05s ease, filter .18s ease}
+    button:hover{filter:brightness(1.03)} button:active{transform:translateY(1px)}
+    .btn-secondary{background:linear-gradient(180deg,#fff,#eef7ff);color:#1b6aa6;box-shadow:0 2px 0 #a6d5ff88,0 6px 16px rgba(0,0,0,.08)}
+    .deck{display:grid;gap:14px;grid-template-columns:1fr} @media(min-width:900px){.deck{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}}
+    .card{background:linear-gradient(180deg,var(--card),#fff);border-radius:18px;padding:14px;box-shadow:0 10px 26px rgba(0,0,0,.10), inset 0 0 0 1px #fff6}
+    .tray{display:flex;gap:10px;overflow:auto;padding:8px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff7);box-shadow:inset 0 0 0 1px #f0eaff}
+    .thumb{flex:0 0 90px;height:70px;border-radius:10px;background:#eee center/cover no-repeat;box-shadow:inset 0 0 0 1px #e7ddff;cursor:pointer;position:relative}
+    .thumb::after{content:"";position:absolute;inset:0;border-radius:10px;box-shadow:0 0 0 3px transparent;transition:box-shadow .15s}
+    .thumb.active::after{box-shadow:0 0 0 3px #ff9ab9}
+    .pill{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff7);box-shadow:inset 0 0 0 1px #f0eaff;font-size:14px;margin-bottom:8px}
+    .progress{font-size:13px;opacity:.9}
+    .board{position:relative;width:min(94vw,700px);aspect-ratio:1/1; margin:0 auto;border-radius:14px;overflow:hidden;background:#fafafa;box-shadow:inset 0 0 0 1px #f0eaff, 0 8px 20px rgba(0,0,0,.06)}
+    .board-inner{position:relative;width:100%;height:100%}
+    .piece{position:absolute;touch-action:none;user-select:none;background-size:var(--bgW) var(--bgH);background-repeat:no-repeat;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+    .piece.dragging{z-index:3;box-shadow:0 8px 18px rgba(0,0,0,.2)}
+    .caption{text-align:center;margin-top:8px;font-size:14px;opacity:.85}
+    .ribbon{position:fixed;inset:0;display:none;place-items:center;z-index:3;backdrop-filter:blur(3px)}
+    .ribbon.show{display:grid}
+    .ribbon .inner{background:linear-gradient(180deg,#fff,#fff5f9);border-radius:18px;padding:20px 18px;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.12), inset 0 0 0 1px #ffd6e6;max-width:min(92vw,420px);animation:pop .18s ease}
+    @keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:scale(1);opacity:1}}
+    .inner h3{font-family:"Pacifico";font-weight:400;margin:0 0 8px;color:#c13b73}
+    .inner p{margin:0 0 12px}
+    /* Builder hidden unless ?edit=1 */
+    #builder{display:none} body.builder #builder{display:block}
+    textarea{width:100%;min-height:160px;resize:vertical;border:1px solid #e6dfff;border-radius:12px;padding:10px 12px;background:#fff;font:13px/1.4 Poppins,sans-serif;}
+  </style>
+</head>
+<body>
+  <div class="hearts" id="bgHearts" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div class="logo" id="logo">♥</div>
+        <div>
+          <h1>Our California Jigsaw</h1>
+          <p class="subtitle" style="margin:.25rem 0 0;opacity:.8;font-size:13px">Beach Boys energy, pastel sunset, and all our little memories 🌴</p>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="btnShuffle">Shuffle ✨</button>
+        <button class="btn-secondary" id="btnPrev">◀︎</button>
+        <button class="btn-secondary" id="btnNext">▶︎</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="pill">
+        <span class="progress">Puzzle <strong id="pIndex">1</strong>/<span id="pTotal">1</span></span>
+        <span class="progress">Pieces: <strong id="pPieces">4×4</strong></span>
+      </div>
+      <div class="board" id="board">
+        <div class="board-inner" id="boardInner"></div>
+      </div>
+      <div class="caption" id="caption"></div>
+      <div class="tray" id="tray"></div>
+    </section>
+
+    <!-- Builder (edit puzzle list & share) -->
+    <section class="card" id="builder">
+      <div class="pill"><strong>Builder mode:</strong> edit puzzles & share a link with your config.</div>
+      <p style="font-size:13px;opacity:.8;margin:0 0 6px">
+        One per line: <code>src | rowsxcols | caption</code>. Example: <code>assets/photos/01-photo.jpg | 4x4 | Malibu coffee stop ☕️🌊</code>
+      </p>
+      <textarea id="lines"></textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn-secondary" id="btnApply">Save & Shuffle</button>
+        <button id="btnShare">Share Link 🔗</button>
+      </div>
+    </section>
+
+    <footer style="text-align:center;font-size:12px;opacity:.7;margin-top:8px">Made with 💖 + ☀️ + 🌊 — all in your browser.</footer>
+  </div>
+
+  <!-- Win ribbon -->
+  <div class="ribbon" id="win">
+    <div class="inner">
+      <h3>Picture perfect! 💘</h3>
+      <p>You're my favorite adventure.</p>
+      <button id="btnCloseWin">Aww 🥹</button>
+    </div>
+  </div>
+
+  <script>
+    // Puzzles (default). Can be overridden by #d=… in URL or Builder.
+    const DEFAULT_PUZZLES = [
+  {
+    "src": "assets/photos/01-pb6.jpg",
+    "caption": "Ferry Building photobooth strip",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/02-pb5ani.jpg",
+    "caption": "Cartoon photobooth",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/03-felt1.jpg",
+    "caption": "Felt portrait with butterflies",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/04-pb4.jpg",
+    "caption": "Photobooth \u2014 red curtain collage",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/05-pb3.jpg",
+    "caption": "Photobooth \u2014 black & white collage",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/06-sb1.jpg",
+    "caption": "Cozy elevator selfie",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/07-nb1.jpg",
+    "caption": "Mirror selfie",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/08-sf1.jpg",
+    "caption": "Windy day by the bay",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/09-pb2.jpg",
+    "caption": "Photobooth \u2014 set 2",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  },
+  {
+    "src": "assets/photos/10-pb1.jpg",
+    "caption": "Photobooth \u2014 set 1",
+    "rows": 4,
+    "cols": 4,
+    "rotate": false
+  }
+];
+
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const encodeData = obj => { try{ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))) }catch(e){ return "" } };
+    const decodeData = str => { try{ return JSON.parse(decodeURIComponent(escape(atob(str)))) }catch(e){ return null } };
+
+    const board = $("#board");
+    const boardInner = $("#boardInner");
+    const captionEl = $("#caption");
+    const tray = $("#tray");
+    const pIndexEl = $("#pIndex");
+    const pTotalEl = $("#pTotal");
+    const pPiecesEl = $("#pPieces");
+    const btnShuffle = $("#btnShuffle");
+    const btnPrev = $("#btnPrev");
+    const btnNext = $("#btnNext");
+    const ribbon = $("#win");
+    const btnCloseWin = $("#btnCloseWin");
+
+    // Builder
+    const linesEl = $("#lines");
+    const btnApply = $("#btnApply");
+    const btnShare = $("#btnShare");
+
+    let PUZZLES = DEFAULT_PUZZLES;
+    let STATE = {
+      i: 0,
+      tiles: [], // {home: idx, r,c, el}
+      rows: 4, cols: 4,
+      imgW: 1, imgH: 1,
+      dragging: null, // tile index
+      solvedCount: 0
+    };
+
+    function sprinkleHearts(n=12, faster=false){
+      const box = document.getElementById("bgHearts");
+      for(let i=0;i<n;i++){ const s=document.createElement("span"); s.textContent=Math.random()<0.3?"♡":"❤"; s.style.left=(Math.random()*100)+"vw"; s.style.setProperty("--shift",(Math.random()*40-20)+"vw"); s.style.animationDuration=(5+Math.random()*(faster?4:10))+"s"; s.style.animationDelay=(Math.random()*(faster?2.2:6))+"s"; box.appendChild(s); setTimeout(()=>s.remove(),16000); }
+    }
+    setInterval(()=> sprinkleHearts(Math.floor(Math.random()*2)+1), 1600);
+
+    function loadFromHash(){
+      const m=(location.hash||"").match(/#d=([^&]+)/);
+      if(!m) return false;
+      const data = decodeData(m[1]);
+      if(!data||!Array.isArray(data.puzzles)) return false;
+      PUZZLES = data.puzzles;
+      return true;
+    }
+
+    function toLines(puzzles){
+      return puzzles.map(p=>`${p.src} | ${p.rows}x${p.cols} | ${p.caption||""}`).join("\n");
+    }
+    function fromLines(txt){
+      const out=[];
+      txt.split(/\n/).map(l=>l.trim()).filter(Boolean).forEach(line=>{
+        const [src, sz, ...cap] = line.split("|");
+        const s=(src||"").trim(); if(!s) return;
+        const size=(sz||"").trim().toLowerCase();
+        const m=size.match(/(\d+)x(\d+)/);
+        const r=m?parseInt(m[1],10):4; const c=m?parseInt(m[2],10):4;
+        out.push({ src:s, rows:r, cols:c, rotate:false, caption:(cap.join("|")||"").trim() });
+      });
+      return out;
+    }
+
+    function preload(src){
+      return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; });
+    }
+
+    async function loadPuzzle(i){
+      if(i<0) i=PUZZLES.length-1;
+      if(i>=PUZZLES.length) i=0;
+      STATE.i = i;
+      const p = PUZZLES[i];
+      pTotalEl.textContent = PUZZLES.length;
+      pIndexEl.textContent = i+1;
+      pPiecesEl.textContent = `${p.rows}×${p.cols}`;
+      captionEl.textContent = p.caption || "";
+      // Thumbs
+      tray.innerHTML = "";
+      PUZZLES.forEach((pp, idx)=>{ const th=document.createElement("div"); th.className="thumb"+(idx===i?" active":""); th.style.backgroundImage=`url('${pp.src}')`; th.addEventListener("click",()=>loadPuzzle(idx)); tray.appendChild(th); });
+
+      const img = await preload(p.src);
+      STATE.rows = p.rows; STATE.cols = p.cols;
+      STATE.imgW = img.naturalWidth; STATE.imgH = img.naturalHeight;
+      // set aspect ratio of board to image
+      board.style.aspectRatio = (STATE.imgW / STATE.imgH).toFixed(5);
+      setupPieces(p.src, STATE.rows, STATE.cols, STATE.imgW, STATE.imgH);
+      shuffle();
+    }
+
+    function setupPieces(src, rows, cols, imgW, imgH){
+      boardInner.innerHTML = "";
+      STATE.tiles = [];
+      const n = rows*cols;
+      const bgW = `${cols*100}%`; const bgH = `${rows*100}%`;
+      for(let r=0;r<rows;r++){ for(let c=0;c<cols;c++){ 
+        const idx = r*cols+c; // home index
+        const piece = document.createElement("div");
+        piece.className = "piece";
+        piece.style.setProperty("--bgW", bgW);
+        piece.style.setProperty("--bgH", bgH);
+        piece.style.backgroundImage = `url('${src}')`;
+        const posX = (c/(cols-1))*100; const posY = (r/(rows-1))*100;
+        piece.style.backgroundPosition = `${posX}% ${posY}%`;
+        piece.dataset.home = idx;
+        piece.dataset.r = r;
+        piece.dataset.c = c;
+        boardInner.appendChild(piece);
+        STATE.tiles.push({home: idx, r, c, el: piece});
+      } }
+      layoutPieces();
+      bindDrag();
+    }
+
+    function layoutPieces(){
+      const rows = STATE.rows, cols=STATE.cols;
+      STATE.tiles.forEach(t=>{
+        t.el.style.width = `${100/cols}%`;
+        t.el.style.height = `${100/rows}%`;
+        t.el.style.left = `${(t.c*100/cols)}%`;
+        t.el.style.top  = `${(t.r*100/rows)}%`;
+        t.el.style.transform = "translate(0,0)";
+      });
+    }
+
+    function shuffle(){
+      const arr = STATE.tiles.map((t,idx)=>idx);
+      // Fisher-Yates
+      for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+      // Ensure not already solved
+      let same = true; for(let k=0;k<arr.length;k++){ if(arr[k]!==k){ same=false; break; } }
+      if(same && arr.length>1){ [arr[0],arr[1]]=[arr[1],arr[0]]; }
+      const rows=STATE.rows, cols=STATE.cols;
+      arr.forEach((tileIdx, pos)=>{ const r=Math.floor(pos/cols), c=pos%cols; const t=STATE.tiles[tileIdx]; t.r=r; t.c=c; });
+      layoutPieces();
+      updateSolved();
+    }
+
+    function bindDrag(){
+      STATE.tiles.forEach((t, idx)=>{ 
+        const el=t.el;
+        el.onpointerdown = (e)=>{ 
+          e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add("dragging");
+          STATE.dragging = idx;
+          STATE.start = {x:e.clientX, y:e.clientY};
+          STATE.startRC = {r:t.r, c:t.c};
+        };
+        el.onpointermove = (e)=>{ if(STATE.dragging!==idx) return; const dx=e.clientX-STATE.start.x, dy=e.clientY-STATE.start.y; 
+          el.style.transform = `translate(${dx}px,${dy}px)`;
+        };
+        el.onpointerup = (e)=>{ if(STATE.dragging!==idx) return; el.classList.remove("dragging"); el.releasePointerCapture(e.pointerId);
+          const rect = boardInner.getBoundingClientRect();
+          const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+          const colW = rect.width / STATE.cols; const rowH = rect.height / STATE.rows;
+          let c = Math.floor(x/colW); let r = Math.floor(y/rowH);
+          r = Math.max(0, Math.min(STATE.rows-1, r));
+          c = Math.max(0, Math.min(STATE.cols-1, c));
+          swapTo(idx, r, c);
+          el.style.transform = "translate(0,0)";
+          STATE.dragging = null; 
+        };
+      });
+      window.addEventListener("resize", layoutPieces);
+    }
+
+    function tileAt(r,c){
+      return STATE.tiles.findIndex(t=>t.r===r && t.c===c);
+    }
+
+    function swapTo(idx, r, c){
+      const otherIdx = tileAt(r,c);
+      if(otherIdx === -1) return;
+      const a = STATE.tiles[idx], b = STATE.tiles[otherIdx];
+      // swap positions
+      const ar=a.r, ac=a.c;
+      a.r=r; a.c=c; b.r=ar; b.c=ac;
+      layoutPieces();
+      updateSolved();
+    }
+
+    function updateSolved(){
+      let ok = true;
+      const cols = STATE.cols;
+      for(const t of STATE.tiles){
+        const homeR = Math.floor(t.home/cols), homeC = t.home%cols;
+        if(t.r!==homeR || t.c!==homeC) { ok=false; break; }
+      }
+      if(ok) celebrate();
+    }
+
+    function celebrate(){
+      ribbon.classList.add("show");
+      sprinkleHearts(24,true);
+    }
+    btnCloseWin.addEventListener("click", ()=> ribbon.classList.remove("show"));
+
+    btnShuffle.addEventListener("click", shuffle);
+    btnPrev.addEventListener("click", ()=> loadPuzzle(STATE.i-1));
+    btnNext.addEventListener("click", ()=> loadPuzzle(STATE.i+1));
+
+    // Builder mode toggle by query string
+    function start(){
+      const params = new URLSearchParams(location.search);
+      if(params.get("edit")==="1") document.body.classList.add("builder");
+      loadFromHash();
+      if(document.body.classList.contains("builder")){
+        linesEl.value = toLines(PUZZLES);
+      }
+      // Thumbs need base list
+      loadPuzzle(0);
+    }
+    document.addEventListener("DOMContentLoaded", start);
+
+    if(btnApply) btnApply.addEventListener("click", ()=>{
+      const newList = fromLines(linesEl.value);
+      if(newList.length) { PUZZLES = newList; loadPuzzle(0); }
+    });
+    if(btnShare) btnShare.addEventListener("click", ()=>{
+      const url = location.origin + location.pathname + "?edit=0#d=" + encodeData({ puzzles: fromLines(linesEl.value) });
+      navigator.clipboard?.writeText(url).then(()=> alert("Share link copied! (Editor hidden)"),
+                                        ()=> prompt("Copy your share link:", url));
+    });
+  </script>
+</body>
+</html>
