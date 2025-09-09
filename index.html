@@ -14,15 +14,26 @@
   <style>
     :root{
       --sky-top:#ffe6ef; --sky-mid:#ffd9c8; --sunset:#ffd1dc;
-      --ocean:#c6f0ff; --sea:#9dd9ff;
-      --ink:#233142; --heart:#ff5f9e; --rose:#ff8fb1;
+      --ocean:#c6f0ff;  --sea:#9dd9ff;
+      --ink:#233142;    --heart:#ff5f9e; --rose:#ff8fb1;
       --card:#ffffffcc; --accent:#ff7aa2; --accent-2:#78c5ff;
-      --ok:#1f9d7a; --safe-top: env(safe-area-inset-top,0px); --safe-bottom: env(safe-area-inset-bottom,0px);
+      --ok:#1f9d7a;     --safe-top: env(safe-area-inset-top,0px); --safe-bottom: env(safe-area-inset-bottom,0px);
     }
-    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,var(--sky-top),var(--sky-mid),var(--sunset),var(--ocean),var(--sea));min-height:100svh;color:var(--ink);font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--sky-top),var(--sky-mid),var(--sunset),var(--ocean),var(--sea));
+      min-height:100svh; color:var(--ink);
+      font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      -webkit-tap-highlight-color:transparent;
+      overscroll-behavior-y:contain;
+    }
+
+    /* Floating hearts */
     .hearts{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
     .hearts span{position:absolute;bottom:-2rem;opacity:.22;color:var(--heart);font-size:clamp(18px,2.8vw,28px);animation:floatUp linear forwards}
     @keyframes floatUp{0%{transform:translateY(0) translateX(0) rotate(0);opacity:.14}100%{transform:translateY(-120vh) translateX(var(--shift)) rotate(18deg);opacity:0}}
+
     .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:calc(10px + var(--safe-top)) 14px calc(14px + var(--safe-bottom))}
     header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
     .title{display:flex;align-items:center;gap:10px}
@@ -40,17 +51,40 @@
     .thumb.active::after{box-shadow:0 0 0 3px #ff9ab9}
     .pill{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,#fff,#fff7);box-shadow:inset 0 0 0 1px #f0eaff;font-size:14px;margin-bottom:8px}
     .progress{font-size:13px;opacity:.9}
-    .board{position:relative;width:min(94vw,700px);aspect-ratio:1/1; margin:0 auto;border-radius:14px;overflow:hidden;background:#fafafa;box-shadow:inset 0 0 0 1px #f0eaff, 0 8px 20px rgba(0,0,0,.06)}
+
+    /* Board + guides overlay */
+    .board{position:relative;width:min(94vw,700px);aspect-ratio:1/1;margin:0 auto;border-radius:14px;overflow:hidden;background:#fafafa;box-shadow:inset 0 0 0 1px #f0eaff, 0 8px 20px rgba(0,0,0,.06)}
     .board-inner{position:relative;width:100%;height:100%}
-    .piece{position:absolute;touch-action:none;user-select:none;background-size:var(--bgW) var(--bgH);background-repeat:no-repeat;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.15)}
-    .piece.dragging{z-index:3;box-shadow:0 8px 18px rgba(0,0,0,.2)}
+    .board-guides{position:absolute;inset:0;pointer-events:none;display:grid;grid-template-columns:repeat(var(--cols),1fr);grid-template-rows:repeat(var(--rows),1fr)}
+    .guide-cell{border:1px solid rgba(0,0,0,.04)}
+    .guide-cell.target{border:2px solid #ff9ab9;background:rgba(255,234,244,.45);box-shadow:inset 0 0 0 2px #ffb3cc80}
+    .guide-cell.home{border-color:#b9f1de;background:rgba(233,255,245,.45)}
+
+    /* Pieces: transitions + states */
+    .piece{
+      position:absolute;touch-action:none;user-select:none;
+      background-size:var(--bgW) var(--bgH);background-repeat:no-repeat;border-radius:8px;
+      box-shadow:0 1px 2px rgba(0,0,0,.15);
+      transition:left .14s cubic-bezier(.2,.8,.2,1), top .14s cubic-bezier(.2,.8,.2,1),
+                 transform .08s ease, box-shadow .14s ease, filter .14s ease;
+      will-change: left, top, transform;
+    }
+    .piece.dragging{z-index:3;transform:scale(1.07) rotate(var(--tilt,0deg));box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .piece.will-swap{filter:brightness(1.05);box-shadow:0 0 0 3px #ff9ab980, 0 8px 18px rgba(0,0,0,.18)}
+    .piece.locked{cursor:default;box-shadow:inset 0 0 0 2px #b9f1de, 0 1px 2px rgba(0,0,0,.1)}
+    .piece.bump{animation:bump .14s ease}
+    @keyframes bump{0%{transform:translate(0,0)}50%{transform:translate(0,0) scale(1.04)}100%{transform:translate(0,0)}}
+
     .caption{text-align:center;margin-top:8px;font-size:14px;opacity:.85}
+
+    /* Win ribbon */
     .ribbon{position:fixed;inset:0;display:none;place-items:center;z-index:3;backdrop-filter:blur(3px)}
     .ribbon.show{display:grid}
     .ribbon .inner{background:linear-gradient(180deg,#fff,#fff5f9);border-radius:18px;padding:20px 18px;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.12), inset 0 0 0 1px #ffd6e6;max-width:min(92vw,420px);animation:pop .18s ease}
     @keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:scale(1);opacity:1}}
     .inner h3{font-family:"Pacifico";font-weight:400;margin:0 0 8px;color:#c13b73}
     .inner p{margin:0 0 12px}
+
     /* Builder hidden unless ?edit=1 */
     #builder{display:none} body.builder #builder{display:block}
     textarea{width:100%;min-height:160px;resize:vertical;border:1px solid #e6dfff;border-radius:12px;padding:10px 12px;background:#fff;font:13px/1.4 Poppins,sans-serif;}
@@ -80,9 +114,13 @@
         <span class="progress">Puzzle <strong id="pIndex">1</strong>/<span id="pTotal">1</span></span>
         <span class="progress">Pieces: <strong id="pPieces">4×4</strong></span>
       </div>
+
       <div class="board" id="board">
         <div class="board-inner" id="boardInner"></div>
+        <!-- NEW: grid overlay for target highlighting -->
+        <div class="board-guides" id="guides" aria-hidden="true"></div>
       </div>
+
       <div class="caption" id="caption"></div>
       <div class="tray" id="tray"></div>
     </section>
@@ -113,79 +151,27 @@
   </div>
 
   <script>
-    // Puzzles (default). Can be overridden by #d=… in URL or Builder.
+    /* ========= your puzzle list (unchanged) ========= */
     const DEFAULT_PUZZLES = [
-  {
-    "src": "assets/photos/01-pb6.jpg",
-    "caption": "IWLYF",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/02-pb5ani.jpg",
-    "caption": "I GOT YOU ALWAYS",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/03-felt1.jpg",
-    "caption": "YOU'RE MY BUTTERFLY",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/04-pb4.jpg",
-    "caption": "SO IN LOVE WITH YOU",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/05-pb3.jpg",
-    "caption": "LOVE ME BABY",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/06-sb1.jpg",
-    "caption": "GOD ONLY KNOWS",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/07-nb1.jpg",
-    "caption": "ALWAYS FOREVER",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/08-sf1.jpg",
-    "caption": "PERFECT ANGELS",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/09-pb2.jpg",
-    "caption": "WE'RE #1",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  },
-  {
-    "src": "assets/photos/10-pb1.jpg",
-    "caption": "GOOD TO MY BABY",
-    "rows": 4,
-    "cols": 4,
-    "rotate": false
-  }
-];
+      {"src":"assets/photos/01-pb6.jpg","caption":"IWLYF","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/02-pb5ani.jpg","caption":"I GOT YOU ALWAYS","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/03-felt1.jpg","caption":"YOU'RE MY BUTTERFLY","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/04-pb4.jpg","caption":"SO IN LOVE WITH YOU","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/05-pb3.jpg","caption":"LOVE ME BABY","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/06-sb1.jpg","caption":"GOD ONLY KNOWS","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/07-nb1.jpg","caption":"ALWAYS FOREVER","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/08-sf1.jpg","caption":"PERFECT ANGELS","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/09-pb2.jpg","caption":"WE'RE #1","rows":4,"cols":4,"rotate":false},
+      {"src":"assets/photos/10-pb1.jpg","caption":"GOOD TO MY BABY","rows":4,"cols":4,"rotate":false}
+    ];
+
+    /* ===== Settings for “feel” (tweak if you want) ===== */
+    const FEEL = {
+      magnet: 0.33,     // snap to home if drop is within this fraction of a cell from home-center
+      targetGlow: true, // show target cell highlight
+      lockOnCorrect: true,
+      tick: true        // small audio/haptic ticks
+    };
 
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
@@ -194,6 +180,7 @@
 
     const board = $("#board");
     const boardInner = $("#boardInner");
+    const guides = $("#guides");
     const captionEl = $("#caption");
     const tray = $("#tray");
     const pIndexEl = $("#pIndex");
@@ -213,31 +200,60 @@
     let PUZZLES = DEFAULT_PUZZLES;
     let STATE = {
       i: 0,
-      tiles: [], // {home: idx, r,c, el}
+      tiles: [], // {home, r, c, el, locked?}
       rows: 4, cols: 4,
       imgW: 1, imgH: 1,
-      dragging: null, // tile index
-      solvedCount: 0
+      dragging: null,
+      start: null,
+      startRC: null,
+      hover: null // {r,c} under pointer while dragging
     };
 
+    /* ---------- tiny audio & haptics ---------- */
+    const AudioFX = (() => {
+      let ctx;
+      function ensure(){ try{ ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} return ctx; }
+      function blip(freq=440, dur=0.08, vol=0.03){
+        const c = ensure(); if(!c) return;
+        const o = c.createOscillator(), g = c.createGain();
+        g.gain.value = vol; o.type = "sine";
+        o.frequency.setValueAtTime(freq, c.currentTime);
+        o.connect(g).connect(c.destination);
+        o.start(); g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur); o.stop(c.currentTime+dur);
+      }
+      return {
+        pop(){ blip(250, .06, .05); blip(420,.06,.03); },
+        good(){ blip(660,.09,.05); setTimeout(()=> blip(880,.10,.04), 65); },
+        nope(){ blip(180,.06,.05); }
+      };
+    })();
+    function haptic(ms=15){ try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){} }
+    document.body.addEventListener("pointerdown", ()=> { /* unlock audio on first gesture */ AudioFX.pop(); }, {once:true});
+
+    /* ---------- hearts background ---------- */
     function sprinkleHearts(n=12, faster=false){
       const box = document.getElementById("bgHearts");
-      for(let i=0;i<n;i++){ const s=document.createElement("span"); s.textContent=Math.random()<0.3?"♡":"❤"; s.style.left=(Math.random()*100)+"vw"; s.style.setProperty("--shift",(Math.random()*40-20)+"vw"); s.style.animationDuration=(5+Math.random()*(faster?4:10))+"s"; s.style.animationDelay=(Math.random()*(faster?2.2:6))+"s"; box.appendChild(s); setTimeout(()=>s.remove(),16000); }
+      for(let i=0;i<n;i++){
+        const s=document.createElement("span");
+        s.textContent=Math.random()<0.3?"♡":"❤";
+        s.style.left=(Math.random()*100)+"vw";
+        s.style.setProperty("--shift",(Math.random()*40-20)+"vw");
+        s.style.animationDuration=(5+Math.random()*(faster?4:10))+"s";
+        s.style.animationDelay=(Math.random()*(faster?2.2:6))+"s";
+        box.appendChild(s); setTimeout(()=>s.remove(),16000);
+      }
     }
     setInterval(()=> sprinkleHearts(Math.floor(Math.random()*2)+1), 1600);
 
+    /* ---------- config from URL ---------- */
     function loadFromHash(){
       const m=(location.hash||"").match(/#d=([^&]+)/);
       if(!m) return false;
       const data = decodeData(m[1]);
       if(!data||!Array.isArray(data.puzzles)) return false;
-      PUZZLES = data.puzzles;
-      return true;
+      PUZZLES = data.puzzles; return true;
     }
-
-    function toLines(puzzles){
-      return puzzles.map(p=>`${p.src} | ${p.rows}x${p.cols} | ${p.caption||""}`).join("\n");
-    }
+    function toLines(puzzles){ return puzzles.map(p=>`${p.src} | ${p.rows}x${p.cols} | ${p.caption||""}`).join("\n"); }
     function fromLines(txt){
       const out=[];
       txt.split(/\n/).map(l=>l.trim()).filter(Boolean).forEach(line=>{
@@ -250,11 +266,9 @@
       });
       return out;
     }
+    function preload(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
 
-    function preload(src){
-      return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; });
-    }
-
+    /* ---------- puzzle load ---------- */
     async function loadPuzzle(i){
       if(i<0) i=PUZZLES.length-1;
       if(i>=PUZZLES.length) i=0;
@@ -264,39 +278,62 @@
       pIndexEl.textContent = i+1;
       pPiecesEl.textContent = `${p.rows}×${p.cols}`;
       captionEl.textContent = p.caption || "";
+
       // Thumbs
       tray.innerHTML = "";
-      PUZZLES.forEach((pp, idx)=>{ const th=document.createElement("div"); th.className="thumb"+(idx===i?" active":""); th.style.backgroundImage=`url('${pp.src}')`; th.addEventListener("click",()=>loadPuzzle(idx)); tray.appendChild(th); });
+      PUZZLES.forEach((pp, idx)=>{
+        const th=document.createElement("div");
+        th.className="thumb"+(idx===i?" active":"");
+        th.style.backgroundImage=`url('${pp.src}')`;
+        th.addEventListener("click",()=>loadPuzzle(idx));
+        tray.appendChild(th);
+      });
 
       const img = await preload(p.src);
       STATE.rows = p.rows; STATE.cols = p.cols;
       STATE.imgW = img.naturalWidth; STATE.imgH = img.naturalHeight;
-      // set aspect ratio of board to image
       board.style.aspectRatio = (STATE.imgW / STATE.imgH).toFixed(5);
-      setupPieces(p.src, STATE.rows, STATE.cols, STATE.imgW, STATE.imgH);
+
+      setupPieces(p.src, STATE.rows, STATE.cols);
+      setupGuides(STATE.rows, STATE.cols);
       shuffle();
     }
 
-    function setupPieces(src, rows, cols, imgW, imgH){
+    function setupGuides(rows, cols){
+      guides.style.setProperty("--rows", rows);
+      guides.style.setProperty("--cols", cols);
+      guides.innerHTML = "";
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const cell = document.createElement("div");
+          cell.className = "guide-cell";
+          guides.appendChild(cell);
+        }
+      }
+    }
+    function guideCell(r,c){ return guides.children[r*STATE.cols + c]; }
+
+    function setupPieces(src, rows, cols){
       boardInner.innerHTML = "";
       STATE.tiles = [];
-      const n = rows*cols;
       const bgW = `${cols*100}%`; const bgH = `${rows*100}%`;
-      for(let r=0;r<rows;r++){ for(let c=0;c<cols;c++){ 
-        const idx = r*cols+c; // home index
-        const piece = document.createElement("div");
-        piece.className = "piece";
-        piece.style.setProperty("--bgW", bgW);
-        piece.style.setProperty("--bgH", bgH);
-        piece.style.backgroundImage = `url('${src}')`;
-        const posX = (c/(cols-1))*100; const posY = (r/(rows-1))*100;
-        piece.style.backgroundPosition = `${posX}% ${posY}%`;
-        piece.dataset.home = idx;
-        piece.dataset.r = r;
-        piece.dataset.c = c;
-        boardInner.appendChild(piece);
-        STATE.tiles.push({home: idx, r, c, el: piece});
-      } }
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const idx = r*cols+c; // home index
+          const piece = document.createElement("div");
+          piece.className = "piece";
+          piece.style.setProperty("--bgW", bgW);
+          piece.style.setProperty("--bgH", bgH);
+          piece.style.backgroundImage = `url('${src}')`;
+          const posX = (c/(cols-1))*100; const posY = (r/(rows-1))*100;
+          piece.style.backgroundPosition = `${posX}% ${posY}%`;
+          piece.dataset.home = idx;
+          piece.dataset.r = r;
+          piece.dataset.c = c;
+          boardInner.appendChild(piece);
+          STATE.tiles.push({home: idx, r, c, el: piece, locked:false});
+        }
+      }
       layoutPieces();
       bindDrag();
     }
@@ -308,63 +345,150 @@
         t.el.style.height = `${100/rows}%`;
         t.el.style.left = `${(t.c*100/cols)}%`;
         t.el.style.top  = `${(t.r*100/rows)}%`;
-        t.el.style.transform = "translate(0,0)";
+        // reset transform after animations
+        if(!t.el.classList.contains("dragging")) t.el.style.transform = "translate(0,0)";
       });
     }
 
     function shuffle(){
-      const arr = STATE.tiles.map((t,idx)=>idx);
-      // Fisher-Yates
+      const arr = STATE.tiles.map((_,idx)=>idx);
       for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-      // Ensure not already solved
+      // Ensure not solved
       let same = true; for(let k=0;k<arr.length;k++){ if(arr[k]!==k){ same=false; break; } }
       if(same && arr.length>1){ [arr[0],arr[1]]=[arr[1],arr[0]]; }
-      const rows=STATE.rows, cols=STATE.cols;
-      arr.forEach((tileIdx, pos)=>{ const r=Math.floor(pos/cols), c=pos%cols; const t=STATE.tiles[tileIdx]; t.r=r; t.c=c; });
+      const cols=STATE.cols;
+      arr.forEach((tileIdx, pos)=>{ const r=Math.floor(pos/cols), c=pos%cols; const t=STATE.tiles[tileIdx]; t.r=r; t.c=c; t.locked=false; t.el.classList.remove("locked"); });
       layoutPieces();
       updateSolved();
     }
 
+    /* ---------- dragging ---------- */
+    function tileAt(r,c){ return STATE.tiles.findIndex(t=>t.r===r && t.c===c); }
+    function homeOf(t){ const cols=STATE.cols; return {r: Math.floor(t.home/cols), c: t.home%cols}; }
+
     function bindDrag(){
-      STATE.tiles.forEach((t, idx)=>{ 
-        const el=t.el;
-        el.onpointerdown = (e)=>{ 
+      STATE.tiles.forEach((t, idx)=>{
+        const el = t.el;
+        el.onpointerdown = (e)=>{
+          if(t.locked) return;
           e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add("dragging");
           STATE.dragging = idx;
           STATE.start = {x:e.clientX, y:e.clientY};
           STATE.startRC = {r:t.r, c:t.c};
+          if(FEEL.tick){ haptic(10); }
         };
-        el.onpointermove = (e)=>{ if(STATE.dragging!==idx) return; const dx=e.clientX-STATE.start.x, dy=e.clientY-STATE.start.y; 
-          el.style.transform = `translate(${dx}px,${dy}px)`;
-        };
-        el.onpointerup = (e)=>{ if(STATE.dragging!==idx) return; el.classList.remove("dragging"); el.releasePointerCapture(e.pointerId);
+        el.onpointermove = (e)=>{
+          if(STATE.dragging!==idx) return;
+          const dx = e.clientX-STATE.start.x, dy = e.clientY-STATE.start.y;
+          const tilt = Math.max(-6, Math.min(6, dx*0.05)); // subtle tilt
+          el.style.setProperty("--tilt", tilt+"deg");
+          el.style.transform = `translate(${dx}px,${dy}px) scale(1.07)`;
+
+          // highlight target cell
           const rect = boardInner.getBoundingClientRect();
-          const x = e.clientX - rect.left; const y = e.clientY - rect.top;
-          const colW = rect.width / STATE.cols; const rowH = rect.height / STATE.rows;
-          let c = Math.floor(x/colW); let r = Math.floor(y/rowH);
+          const colW = rect.width / STATE.cols, rowH = rect.height / STATE.rows;
+          let c = Math.floor((e.clientX - rect.left) / colW);
+          let r = Math.floor((e.clientY - rect.top)  / rowH);
           r = Math.max(0, Math.min(STATE.rows-1, r));
           c = Math.max(0, Math.min(STATE.cols-1, c));
-          swapTo(idx, r, c);
-          el.style.transform = "translate(0,0)";
-          STATE.dragging = null; 
+          STATE.hover = {r,c};
+          highlightTarget(idx, r, c, e.clientX, e.clientY);
+        };
+        el.onpointerup = (e)=>{
+          if(STATE.dragging!==idx) return;
+          el.classList.remove("dragging"); el.releasePointerCapture(e.pointerId);
+          const rect = boardInner.getBoundingClientRect();
+          const colW = rect.width / STATE.cols, rowH = rect.height / STATE.rows;
+          // proposed target by pointer
+          let c = Math.floor((e.clientX - rect.left) / colW);
+          let r = Math.floor((e.clientY - rect.top)  / rowH);
+          r = Math.max(0, Math.min(STATE.rows-1, r));
+          c = Math.max(0, Math.min(STATE.cols-1, c));
+
+          // magnetic snap to home if near
+          const tCurr = STATE.tiles[idx]; const home = homeOf(tCurr);
+          const centerX = rect.left + (home.c + 0.5)*colW;
+          const centerY = rect.top  + (home.r + 0.5)*rowH;
+          const d = Math.hypot(e.clientX-centerX, e.clientY-centerY);
+          const snapRadius = Math.min(colW,rowH)*FEEL.magnet;
+          if(d < snapRadius){ r = home.r; c = home.c; }
+
+          clearGuideHighlights();
+          finishDrop(idx, r, c);
+          STATE.dragging = null; STATE.hover = null;
         };
       });
       window.addEventListener("resize", layoutPieces);
     }
 
-    function tileAt(r,c){
-      return STATE.tiles.findIndex(t=>t.r===r && t.c===c);
+    function highlightTarget(dragIdx, r, c, x, y){
+      if(!FEEL.targetGlow) return;
+      clearGuideHighlights();
+
+      const t = STATE.tiles[dragIdx];
+      const home = homeOf(t);
+      const cell = guideCell(r,c); if(cell) cell.classList.add("target");
+      const isHomeCell = (r===home.r && c===home.c);
+      if(isHomeCell){ const hc = guideCell(home.r, home.c); hc && hc.classList.add("home","target"); }
+
+      // preview which other tile will be bumped
+      const otherIdx = tileAt(r,c);
+      $$(`.piece.will-swap`).forEach(n=> n.classList.remove("will-swap"));
+      if(otherIdx>=0 && otherIdx!==dragIdx){
+        const other = STATE.tiles[otherIdx];
+        if(!other.locked) other.el.classList.add("will-swap");
+      }
+    }
+    function clearGuideHighlights(){
+      $$(".guide-cell.target, .guide-cell.home").forEach(n=>{ n.classList.remove("target","home"); });
+      $$(`.piece.will-swap`).forEach(n=> n.classList.remove("will-swap"));
     }
 
-    function swapTo(idx, r, c){
+    function finishDrop(idx, r, c){
+      const a = STATE.tiles[idx];
       const otherIdx = tileAt(r,c);
-      if(otherIdx === -1) return;
-      const a = STATE.tiles[idx], b = STATE.tiles[otherIdx];
-      // swap positions
-      const ar=a.r, ac=a.c;
-      a.r=r; a.c=c; b.r=ar; b.c=ac;
-      layoutPieces();
+
+      if(otherIdx === -1){
+        // shouldn't happen, grid is always filled
+        a.r = r; a.c = c; layoutPieces();
+      }else if(otherIdx === idx){
+        // dropped back on itself -> small bump
+        a.el.classList.add("bump"); setTimeout(()=>a.el.classList.remove("bump"), 160);
+      }else{
+        const b = STATE.tiles[otherIdx];
+        if(b.locked){
+          // can't bump a locked piece → snap back
+          a.r = STATE.startRC.r; a.c = STATE.startRC.c;
+          layoutPieces(); a.el.classList.add("bump");
+          setTimeout(()=>a.el.classList.remove("bump"), 160);
+          if(FEEL.tick){ AudioFX.nope(); haptic(10); }
+          return;
+        }
+        // swap positions (animated by CSS)
+        const ar=a.r, ac=a.c;
+        a.r=r; a.c=c; b.r=ar; b.c=ac;
+        layoutPieces();
+        a.el.classList.add("bump"); b.el.classList.add("bump");
+        setTimeout(()=>{ a.el.classList.remove("bump"); b.el.classList.remove("bump"); }, 170);
+        if(FEEL.tick){ AudioFX.pop(); haptic(12); }
+      }
+      // check locks and win
+      maybeLock(idx);
+      if(otherIdx>=0) maybeLock(otherIdx);
       updateSolved();
+    }
+
+    function maybeLock(idx){
+      if(!FEEL.lockOnCorrect) return;
+      const t = STATE.tiles[idx];
+      const cols = STATE.cols;
+      const homeR = Math.floor(t.home/cols), homeC = t.home%cols;
+      if(t.r===homeR && t.c===homeC && !t.locked){
+        t.locked = true;
+        t.el.classList.add("locked");
+        // celebratory micro pop
+        if(FEEL.tick){ AudioFX.good(); haptic(25); }
+      }
     }
 
     function updateSolved(){
@@ -372,7 +496,7 @@
       const cols = STATE.cols;
       for(const t of STATE.tiles){
         const homeR = Math.floor(t.home/cols), homeC = t.home%cols;
-        if(t.r!==homeR || t.c!==homeC) { ok=false; break; }
+        if(t.r!==homeR || t.c!==homeC){ ok=false; break; }
       }
       if(ok) celebrate();
     }
@@ -387,7 +511,7 @@
     btnPrev.addEventListener("click", ()=> loadPuzzle(STATE.i-1));
     btnNext.addEventListener("click", ()=> loadPuzzle(STATE.i+1));
 
-    // Builder mode toggle by query string
+    // Builder
     function start(){
       const params = new URLSearchParams(location.search);
       if(params.get("edit")==="1") document.body.classList.add("builder");
@@ -395,19 +519,18 @@
       if(document.body.classList.contains("builder")){
         linesEl.value = toLines(PUZZLES);
       }
-      // Thumbs need base list
       loadPuzzle(0);
     }
     document.addEventListener("DOMContentLoaded", start);
 
     if(btnApply) btnApply.addEventListener("click", ()=>{
       const newList = fromLines(linesEl.value);
-      if(newList.length) { PUZZLES = newList; loadPuzzle(0); }
+      if(newList.length){ PUZZLES = newList; loadPuzzle(0); }
     });
     if(btnShare) btnShare.addEventListener("click", ()=>{
       const url = location.origin + location.pathname + "?edit=0#d=" + encodeData({ puzzles: fromLines(linesEl.value) });
       navigator.clipboard?.writeText(url).then(()=> alert("Share link copied! (Editor hidden)"),
-                                        ()=> prompt("Copy your share link:", url));
+                                            ()=> prompt("Copy your share link:", url));
     });
   </script>
 </body>
